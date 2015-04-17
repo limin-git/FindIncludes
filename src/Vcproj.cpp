@@ -1,0 +1,138 @@
+#include "StdAfx.h"
+#include "Vcproj.h"
+
+
+Vcproj::Vcproj( const path& p, const std::string& configuration_type )
+    : m_path( p ),
+      m_configuration_type( configuration_type )
+{
+    m_current_path = m_path.parent_path();
+    m_str = get_string_from_file( m_path.string() );
+    //std::cout << m_current_path.string() << std::endl;
+
+    extract_files();
+    extract_additional_include_directories();
+}
+
+
+std::string Vcproj::get_string_from_file( const std::string& file_path )
+{
+    std::ifstream ifs( file_path.c_str() );
+
+    if ( ifs )
+    {
+        return std::string( std::istreambuf_iterator< char >( ifs ), ( std::istreambuf_iterator< char >() ) );
+    }
+
+    return "";
+}
+
+
+void Vcproj::extract_files()
+{
+    if ( m_str.empty() )
+    {
+        return;
+    }
+
+    // extract files
+    static const boost::regex file_regex
+    (
+        "(?x)"
+        "<File \\s+"
+        "    RelativePath=\" ( [^\"]+ ) \" \\s+ > "   //$1, file relative path
+        "    ( .*? ) \\s+ "                           //$2, configurations
+        "</File>"
+    );
+
+    static const boost::regex file_configuration_regex
+    (
+        "(?x)"
+        "<FileConfiguration \\s+"
+        "Name= \" ( .+? )  \" \\s+"                 //$1, Name
+        "ExcludedFromBuild= \" ( .+? ) \" \\s+ "    //$2, ExcludedFromBuild
+        ">"
+    );
+
+    boost::sregex_iterator it( m_str.begin(), m_str.end(), file_regex );
+    boost::sregex_iterator end;
+
+    for ( ; it != end; ++it )
+    {
+        path source_file_relative_path = it->str(1);
+        std::string configurations = it->str(2);
+
+        bool is_excluded = false;
+
+        if ( false == configurations.empty() )
+        {
+            boost::sregex_iterator fc_it( configurations.begin(), configurations.end(), file_configuration_regex );
+            boost::sregex_iterator end;
+
+            for ( ; fc_it != end; ++fc_it )
+            {
+                std::string file_configuration_name = fc_it->str(1);
+                std::string excluded_form_build = fc_it->str(2);
+
+                std::stringstream match_strm;
+                match_strm << m_configuration_type << "|Win32";
+
+                if ( file_configuration_name == match_strm.str() )
+                {
+                    if ( "true" == excluded_form_build )
+                    {
+                        is_excluded = true;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        if ( false == is_excluded )
+        {
+            path p = boost::filesystem::complete( m_current_path / source_file_relative_path  );
+            std::cout << p.string() << std::endl;
+            m_files.push_back( p );
+        }
+    }
+}
+
+
+void Vcproj::extract_additional_include_directories()
+{
+    if ( m_str.empty() )
+    {
+        return;
+    }
+
+    std::stringstream configuration_regex_strm;
+    configuration_regex_strm
+        << "(?x)"
+        << "<Configuration \\s+"
+        << "    Name=\"" << m_configuration_type << "\\|Win32\""
+        << "    .+?"
+        << "    AdditionalIncludeDirectories=\" ([^\"]*) \""
+        << "    .+?"
+        << "</Configuration>"
+        ;
+    static const boost::regex e( configuration_regex_strm.str() );
+    boost::smatch m;
+
+    if ( boost::regex_search( m_str, m, e ) )
+    {
+        std::string dirs = m.str(1);
+        //std::cout << dirs << std::endl;
+
+        typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+        boost::char_separator<char> sep( ";," );
+        tokenizer tokens( dirs, sep );
+
+        for ( tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it )
+        {
+            path p(*it);
+            p.make_preferred();
+            m_additional_include_directories.push_back( p );
+        }
+    }
+}

@@ -2,8 +2,12 @@
 #include "FileIncludeFinder.h"
 
 
-FileIncludeFinder::FileIncludeFinder()
+FileIncludeFinder::FileIncludeFinder( const path& p, const path& current_path, const std::vector<path>& additional )
+    : m_path( p ),
+      m_current_path( current_path ),
+      m_additional_directories( additional )
 {
+#if 0
     //../../../../build/win32_n/transactive;../../../../build/win32_n/transactive/core/message/idl/src;../../../../build/win32_n/transactive/core/exceptions/idl/src;..\..\;..\..\..\cots\omniORB\omniORB_4.1.6\include;../../../cots/ACE/6_0_4/ACE_wrappers;..\..\..\cots\boost\boost_1_39_0
     m_path = "C:\\Code\\PchBuild\\code\\transactive\\core\\corba\\src\\CorbaUtil.cpp";
     m_current_path = "C:\\Code\\PchBuild\\code\\transactive\\core\\corba";
@@ -15,9 +19,11 @@ FileIncludeFinder::FileIncludeFinder()
     m_additional_directories.push_back( path("../../../../build/win32_n/transactive/core/exceptions/idl/src") );
     m_additional_directories.push_back( path("../../../cots/omniORB/omniORB_4.1.6/include") );
     m_additional_directories.push_back( path("../../../cots/ACE/6_0_4/ACE_wrappers") );
-    m_additional_directories.push_back( path("../../../cots/boost\boost_1_39_0") );
+    m_additional_directories.push_back( path("../../../cots/boost/boost_1_39_0") );
+#endif
 
     find_all_includes();
+    //optput(std::cout, m_includes );
 }
 
 
@@ -37,13 +43,11 @@ std::string FileIncludeFinder::get_string_from_file( const std::string& file_pat
 std::vector<path> FileIncludeFinder::get_includes( const std::string& s )
 {
     std::vector<path> paths;
-
-    const char* include_str =
+    static const boost::regex e
+    (
         "(?x)"
         "^ [ \\t]* \\#include [ \\t]+ [\"<] (.+?) (?!\\.inl) [\">]"
-        ;
-
-    static const boost::regex e( include_str );
+    );
     boost::sregex_iterator it( s.begin(), s.end(), e );
     boost::sregex_iterator end;
 
@@ -57,26 +61,48 @@ std::vector<path> FileIncludeFinder::get_includes( const std::string& s )
 }
 
 
-path FileIncludeFinder::find_existing_path( const path& include )
+path FileIncludeFinder::find_existing_path( const path& include, const path& parent )
 {
     if ( include.is_complete() )
     {
         return include;
     }
 
-    path p = m_current_path / include;
-
-    if ( boost::filesystem::exists( p ) )
     {
-        //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
-        return boost::filesystem::system_complete(p);
+        path p = parent / include;
+
+        if ( boost::filesystem::exists( p ) && ! is_directory(p) )
+        {
+            //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
+            return boost::filesystem::system_complete(p);
+        }
+    }
+
+    {
+        path p = m_current_path / include;
+
+        if ( boost::filesystem::exists( p ) && ! is_directory(p) )
+        {
+            //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
+            return boost::filesystem::system_complete(p);
+        }
     }
 
     for ( size_t i = 0; i < m_additional_directories.size(); ++i )
     {
-        path p = m_current_path / m_additional_directories[i] / include;
+        path p;
+        path add = m_additional_directories[i];
 
-        if ( boost::filesystem::exists( p ) )
+        if ( add.is_absolute() )
+        {
+            p = add / include;
+        }
+        else
+        {
+            p = m_current_path / add / include;
+        }
+
+        if ( boost::filesystem::exists( p ) && ! is_directory(p) )
         {
             //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
             return boost::filesystem::system_complete(p);
@@ -97,43 +123,47 @@ void FileIncludeFinder::find_all_includes()
         m_queue.pop();
         m_includes.insert( p );
 
-        p = find_existing_path( p );
-
         if ( p.empty() )
         {
             continue;
         }
 
+        //std::cout << p.string() << std::endl;
+        path parent = p.parent_path();
         std::string s = get_string_from_file( p.string() );
         std::vector<path> includes = get_includes( s );
 
         for ( size_t i = 0; i < includes.size(); ++i )
         {
-            path& include = includes[i];
-
-            path p = find_existing_path( include );
+            path p = find_existing_path( includes[i], parent );
 
             if ( ! p.empty() )
             {
-                std::cout << p.string() << std::endl;
-                if ( m_includes.find( include ) == m_includes.end() )
+                if ( m_includes.find( p ) == m_includes.end() )
                 {
-                    m_queue.push( include );
+                    m_includes.insert( p );
+                    m_queue.push( p );
+                }
+            }
+            else
+            {
+                if ( true == m_includes.insert( includes[i] ).second )
+                {
+                    //std::cout << includes[i].string() << std::endl;
                 }
             }
         }
     }
+}
 
-    return;
 
-    std::string s = get_string_from_file( m_path.string() );
-    //std::cout << s << std::endl;
-
-    std::vector<path> includes = get_includes( s );
-
-    for ( size_t i = 0; i < includes.size(); ++i )
+std::ostream& FileIncludeFinder::optput( std::ostream& os, const std::set<path>& paths )
+{
+    for ( std::set<path>::const_iterator it = paths.begin(); it != paths.end(); ++it )
     {
-        find_existing_path( includes[i] );
+        os << it->string() << std::endl;
     }
 
+    return os;
 }
+
