@@ -1,0 +1,30 @@
+
+
+###########################
+#
+# DEBUG VERSION
+#
+###########################
+
+C:\My Document\Code\C++\MakeSDK\Debug\MakeSDK.exe
+
+MakeSDK clean
+MakeSDK C:\Code\-\TA_BASE C:\Code\-\3001
+MakeSDK C:\Code\-\TA_BASE C:\Code\-\3001 clean
+
+
+###########################
+#
+# RELEASE VERSION
+#
+###########################
+
+"C:\My Document\Code\C++\MakeSDK\Release\MakeSDK.exe"
+
+MakeSDK clean
+MakeSDK C:\Code\3001_TIP_NEW\TA_BASE C:\Code\3001_TIP_NEW\3001
+MakeSDK C:\Code\3001_TIP_NEW\TA_BASE C:\Code\3001_TIP_NEW\3001 clean
+
+
+MakeSDK C:\Code\PRIV_GenericGUI\TA_BASE C:\Code\PRIV_GenericGUI\3001
+MakeSDK C:\Code\PRIV_GenericGUI\TA_BASE C:\Code\PRIV_GenericGUI\3001 clean
