@@ -12,37 +12,57 @@ FileIncludeFinder::FileIncludeFinder( const path& p, const path& current_path, c
 }
 
 
-std::string FileIncludeFinder::get_string_from_file( const std::string& file_path )
+const std::string& FileIncludeFinder::get_string_from_file( const std::string& file_path )
 {
-    std::ifstream ifs( file_path.c_str() );
+    static std::map<std::string, std::string> m_cache;
+    static boost::mutex m_lock;
+    boost::lock_guard<boost::mutex> guard(m_lock);
 
-    if ( ifs )
+    std::map<std::string, std::string>::iterator it = m_cache.find( file_path );
+
+    if ( it == m_cache.end() )
     {
-        return std::string( std::istreambuf_iterator< char >( ifs ), ( std::istreambuf_iterator< char >() ) );
+        std::ifstream ifs( file_path.c_str() );
+
+        if ( ifs )
+        {
+            m_cache[file_path] = std::string( std::istreambuf_iterator< char >( ifs ), ( std::istreambuf_iterator< char >() ) );
+        }
     }
 
-    return "";
+    return m_cache[file_path];
 }
 
 
-std::vector<path> FileIncludeFinder::get_includes( const std::string& s )
+const std::vector<path>& FileIncludeFinder::get_includes( const std::string& s )
 {
-    std::vector<path> paths;
-    static const boost::regex e
-    (
-        "(?x)"
-        "^ [ \\t]* \\#include [ \\t]+ [\"<] (.+?) (?!\\.inl) [\">]"
-    );
-    boost::sregex_iterator it( s.begin(), s.end(), e );
-    boost::sregex_iterator end;
+    static std::map<const char*, std::vector<path> > m_cache;
+    static boost::mutex m_lock;
+    boost::lock_guard<boost::mutex> guard(m_lock);
 
-    for ( ; it != end; ++it )
+    std::map<const char*, std::vector<path> >::iterator it = m_cache.find( s.c_str() );
+
+    if ( it == m_cache.end() )
     {
-        paths.push_back( path(it->str(1)) );
-        //std::cout << it->str(1) << std::endl;
+        std::vector<path> paths;
+        static const boost::regex e
+        (
+            "(?x)"
+            "^ [ \\t]* \\#include [ \\t]+ [\"<] (.+?) (?!\\.inl) [\">]"
+        );
+        boost::sregex_iterator it( s.begin(), s.end(), e );
+        boost::sregex_iterator end;
+
+        for ( ; it != end; ++it )
+        {
+            paths.push_back( path(it->str(1)) );
+            //std::cout << it->str(1) << std::endl;
+        }
+
+        m_cache[s.c_str()] = paths;
     }
 
-    return paths;
+    return m_cache[s.c_str()];
 }
 
 
@@ -115,8 +135,8 @@ void FileIncludeFinder::find_all_includes()
 
         //std::cout << p.string() << std::endl;
         path parent = p.parent_path();
-        std::string s = get_string_from_file( p.string() );
-        std::vector<path> includes = get_includes( s );
+        const std::string& s = get_string_from_file( p.string() );
+        const std::vector<path>& includes = get_includes( s );
 
         for ( size_t i = 0; i < includes.size(); ++i )
         {
@@ -142,7 +162,7 @@ void FileIncludeFinder::find_all_includes()
 }
 
 
-std::ostream& FileIncludeFinder::optput( std::ostream& os, const std::set<path>& paths )
+std::ostream& FileIncludeFinder::output( std::ostream& os, const std::set<path>& paths )
 {
     for ( std::set<path>::const_iterator it = paths.begin(); it != paths.end(); ++it )
     {
@@ -152,3 +172,31 @@ std::ostream& FileIncludeFinder::optput( std::ostream& os, const std::set<path>&
     return os;
 }
 
+
+boost::shared_ptr<boost::thread>  FileIncludeFinder::get_includes_thread( std::set<path>& includes, const path& p, const path& current_path, const std::vector<path>& additional )
+{
+    struct ThreadFinder
+    {
+        ThreadFinder( std::set<path>& includes, const path& p, const path& current_path, const std::vector<path>& additional )
+            : m_includes( includes ),
+              m_path( p ),
+              m_current_path( current_path ),
+              m_additional( additional )
+        {
+        }
+
+        void operator()()
+        {
+            FileIncludeFinder f( m_path, m_current_path, m_additional );
+            m_includes = f.m_includes;
+        }
+
+        std::set<path>& m_includes;
+        const path& m_path;
+        const path& m_current_path;
+        const std::vector<path>& m_additional;
+    };
+
+    ThreadFinder thread_finder( includes, p, current_path, additional );
+    return boost::shared_ptr<boost::thread>( new boost::thread( thread_finder ) );
+}

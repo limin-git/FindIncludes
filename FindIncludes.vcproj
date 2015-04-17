@@ -226,15 +226,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\MakeSDK.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\MakeSDK.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Parameter.cpp"
 				>
 			</File>
 			<File

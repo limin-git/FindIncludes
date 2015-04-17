@@ -6,22 +6,38 @@
 
 void main(int argc, char* argv[])
 {
-    //FileIncludeFinder f;
-    std::set<path> all_includes;
-    Solution s( "C:\\Code\\PchBuild\\code\\tools\\build\\tools.build.Build_Base_Core.sln" );
-    std::vector<path>& projects = s.m_projects;
-
-    for ( size_t i = 0; i < projects.size(); ++i )
+    if ( argc != 2 )
     {
-        Vcproj p( projects[i] );
-        std::vector<path>& files = p.m_files;
+        path p( argv[0] );
 
-        for ( size_t i = 0; i < files.size(); ++i )
-        {
-            FileIncludeFinder f( files[i], p.m_current_path, p.m_additional_include_directories );
-            all_includes.insert( f.m_includes.begin(), f.m_includes.end() );
-        }
+        std::cout
+            << "Usage: \n"
+            << "    " << p.filename().string() << " < .vcproj | .sln >"
+            << std::endl;
+        return;
     }
 
-    FileIncludeFinder::optput( std::cout, all_includes );
+    std::set<path> includes;
+
+    if ( boost::ends_with( argv[1], "vcproj" ) )
+    {
+        includes = Vcproj::get_includes_in_thread( argv[1] );
+    }
+    else if ( boost::ends_with( argv[1], "sln" ) )
+    {
+        includes = Solution::get_includes_in_thread( argv[1] );
+    }
+    else
+    {
+        std::cout << "can not recognize \'" << argv[1] << "\', only support .vcproj, .sln." << std::endl;
+        return;
+    }
+
+    //Vcproj p( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
+    //std::set<path> paths = Vcproj::get_includes_in_thread( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
+    //std::set<path> paths = Solution::get_includes_in_thread( "C:\\Code\\PchBuild\\code\\tools\\build\\tools.build.Build_Base_Bus.sln" );
+
+    system( "CLS" );
+    std::cout << "================================================= INCLUDES =================================================" << std::endl;
+    FileIncludeFinder::output( std::cout, includes );
 }

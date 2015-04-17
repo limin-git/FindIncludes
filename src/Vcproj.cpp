@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Vcproj.h"
+#include "FileIncludeFinder.h"
 
 
 Vcproj::Vcproj( const path& p, const std::string& configuration_type )
@@ -93,8 +94,12 @@ void Vcproj::extract_files()
         if ( false == is_excluded )
         {
             path p = boost::filesystem::system_complete( m_current_path / source_file_relative_path  );
-            //std::cout << p.string() << std::endl;
-            m_files.push_back( p );
+
+            if ( boost::ends_with( p.string(), "cpp" ) )
+            {
+                //std::cout << p.string() << std::endl;
+                m_files.push_back( p );
+            }
         }
     }
 }
@@ -137,4 +142,36 @@ void Vcproj::extract_additional_include_directories()
             m_additional_include_directories.push_back( p );
         }
     }
+}
+
+
+std::set<path> Vcproj::get_includes_in_thread( const path& file_path )
+{
+    Vcproj p( file_path );
+    std::vector<path>& files = p.m_files;
+    std::map<path, std::set<path> > includes_map;
+    std::vector<boost::shared_ptr<boost::thread> > threads;
+
+    for ( size_t i = 0; i < files.size(); ++i )
+    {
+        boost::shared_ptr<boost::thread> t = FileIncludeFinder::get_includes_thread( includes_map[files[i]], files[i], p.m_current_path, p.m_additional_include_directories );
+        threads.push_back( t );
+    }
+
+    for ( size_t i = 0; i < threads.size(); ++i )
+    {
+        threads[i]->join();
+        std::cout << "." << std::flush;
+    }
+
+    std::cout << std::endl;
+
+    std::set<path> includes;
+
+    for ( std::map<path, std::set<path> >::iterator it = includes_map.begin(); it != includes_map.end(); ++it )
+    {
+        includes.insert( it->second.begin(), it->second.end() );
+    }
+
+    return includes;    
 }

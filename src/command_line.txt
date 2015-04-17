@@ -19,12 +19,8 @@ MakeSDK C:\Code\-\TA_BASE C:\Code\-\3001 clean
 #
 ###########################
 
-"C:\My Document\Code\C++\MakeSDK\Release\MakeSDK.exe"
+"C:\My Document\Code\C++\FindIncludes\Release\FindIncludes.exe"
 
-MakeSDK clean
-MakeSDK C:\Code\3001_TIP_NEW\TA_BASE C:\Code\3001_TIP_NEW\3001
-MakeSDK C:\Code\3001_TIP_NEW\TA_BASE C:\Code\3001_TIP_NEW\3001 clean
-
-
-MakeSDK C:\Code\PRIV_GenericGUI\TA_BASE C:\Code\PRIV_GenericGUI\3001
-MakeSDK C:\Code\PRIV_GenericGUI\TA_BASE C:\Code\PRIV_GenericGUI\3001 clean
+CD "C:\My Document\Code\C++\FindIncludes\Release"
+FindIncludes C:\Code\3001_TIP_NEW\TA_BASE\code\tools\build\tools.build.Build_Base_Core.sln
+FindIncludes C:\Code\3001_TIP_NEW\TA_BASE\code\transactive\core\corba\core.corba.TA_CorbaUtil.vcproj

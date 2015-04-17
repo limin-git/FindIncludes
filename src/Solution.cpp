@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Solution.h"
+#include "Vcproj.h"
 
 
 Solution::Solution( const path& p )
@@ -59,4 +60,20 @@ void Solution::extract_projects()
         std::cout << p.string() << std::endl;
         m_projects.push_back( p );
     }
+}
+
+
+std::set<path> Solution::get_includes_in_thread( const path& file_path )
+{
+    std::set<path> all_includes;
+    Solution s( file_path );
+    std::vector<path>& projects = s.m_projects;
+
+    for ( size_t i = 0; i < projects.size(); ++i )
+    {
+        std::set<path> includes = Vcproj::get_includes_in_thread( projects[i] );
+        all_includes.insert( includes.begin(), includes.end() );
+    }
+
+    return all_includes;    
 }

@@ -11,6 +11,8 @@ public:
 
     Solution( const path& p );
 
+    static std::set<path> get_includes_in_thread( const path& file_path );
+
 private:
 
     void extract_projects();
