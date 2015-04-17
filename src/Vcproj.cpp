@@ -147,14 +147,15 @@ void Vcproj::extract_additional_include_directories()
 
 std::set<path> Vcproj::get_includes_in_thread( const path& file_path )
 {
+    std::set<path> includes;
     Vcproj p( file_path );
     std::vector<path>& files = p.m_files;
-    std::map<path, std::set<path> > includes_map;
+    std::vector< std::set<path> > includes_list( files.size() );
     std::vector<boost::shared_ptr<boost::thread> > threads;
 
     for ( size_t i = 0; i < files.size(); ++i )
     {
-        boost::shared_ptr<boost::thread> t = FileIncludeFinder::get_includes_thread( includes_map[files[i]], files[i], p.m_current_path, p.m_additional_include_directories );
+        boost::shared_ptr<boost::thread> t = FileIncludeFinder::get_includes_thread( includes_list[i], files[i], p.m_current_path, p.m_additional_include_directories );
         threads.push_back( t );
     }
 
@@ -166,11 +167,9 @@ std::set<path> Vcproj::get_includes_in_thread( const path& file_path )
 
     std::cout << std::endl;
 
-    std::set<path> includes;
-
-    for ( std::map<path, std::set<path> >::iterator it = includes_map.begin(); it != includes_map.end(); ++it )
+    for ( size_t i = 0; i < 5; ++i )
     {
-        includes.insert( it->second.begin(), it->second.end() );
+        includes.insert( includes_list[i].begin(), includes_list[i].end() );
     }
 
     return includes;    
