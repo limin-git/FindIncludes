@@ -6,6 +6,7 @@ Vcproj::Vcproj( const path& p, const std::string& configuration_type )
     : m_path( p ),
       m_configuration_type( configuration_type )
 {
+    std::cout << m_path.string() << std::endl;
     m_current_path = m_path.parent_path();
     m_str = get_string_from_file( m_path.string() );
     //std::cout << m_current_path.string() << std::endl;
@@ -91,8 +92,8 @@ void Vcproj::extract_files()
 
         if ( false == is_excluded )
         {
-            path p = boost::filesystem::complete( m_current_path / source_file_relative_path  );
-            std::cout << p.string() << std::endl;
+            path p = boost::filesystem::system_complete( m_current_path / source_file_relative_path  );
+            //std::cout << p.string() << std::endl;
             m_files.push_back( p );
         }
     }
@@ -131,6 +132,7 @@ void Vcproj::extract_additional_include_directories()
         for ( tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it )
         {
             path p(*it);
+            //std::cout << p.string() << std::endl;
             p.make_preferred();
             m_additional_include_directories.push_back( p );
         }

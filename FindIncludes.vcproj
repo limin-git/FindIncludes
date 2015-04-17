@@ -198,6 +198,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Solution.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Solution.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\Vcproj.cpp"
 				>
 			</File>

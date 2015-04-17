@@ -7,23 +7,8 @@ FileIncludeFinder::FileIncludeFinder( const path& p, const path& current_path, c
       m_current_path( current_path ),
       m_additional_directories( additional )
 {
-#if 0
-    //../../../../build/win32_n/transactive;../../../../build/win32_n/transactive/core/message/idl/src;../../../../build/win32_n/transactive/core/exceptions/idl/src;..\..\;..\..\..\cots\omniORB\omniORB_4.1.6\include;../../../cots/ACE/6_0_4/ACE_wrappers;..\..\..\cots\boost\boost_1_39_0
-    m_path = "C:\\Code\\PchBuild\\code\\transactive\\core\\corba\\src\\CorbaUtil.cpp";
-    m_current_path = "C:\\Code\\PchBuild\\code\\transactive\\core\\corba";
-    //m_current_path = boost::filesystem::system_complete( m_current_path );
-    //std::cout << m_current_path.string() << std::endl;
-    m_additional_directories.push_back( path("../../") );
-    m_additional_directories.push_back( path("../../../../build/win32_n/transactive") );
-    m_additional_directories.push_back( path("../../../../build/win32_n/transactive/core/message/idl/src") );
-    m_additional_directories.push_back( path("../../../../build/win32_n/transactive/core/exceptions/idl/src") );
-    m_additional_directories.push_back( path("../../../cots/omniORB/omniORB_4.1.6/include") );
-    m_additional_directories.push_back( path("../../../cots/ACE/6_0_4/ACE_wrappers") );
-    m_additional_directories.push_back( path("../../../cots/boost/boost_1_39_0") );
-#endif
-
+    std::cout << m_path.string() << std::endl;
     find_all_includes();
-    //optput(std::cout, m_includes );
 }
 
 
