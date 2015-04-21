@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="FindIncludes"
+	Name="IncludeCollector"
 	ProjectGUID="{B5D25957-E06B-455F-9B21-B606509418B4}"
 	RootNamespace="MakeSDK"
 	Keyword="Win32Proj"
@@ -25,7 +25,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="IF EXIST $(ConfigurationName)\vc90.pdb DEL /Q /F $(ConfigurationName)\vc90.pdb&#x0D;&#x0A;IF EXIST $(ConfigurationName)\vc90.idb  DEL /Q /F $(ConfigurationName)\vc90.idb&#x0D;&#x0A;MKLINK /H $(ConfigurationName)\vc90.pdb ..\StdAfx\$(ConfigurationName)\vc90.pdb&#x0D;&#x0A;MKLINK /H $(ConfigurationName)\vc90.idb  ..\StdAfx\$(ConfigurationName)\vc90.idb&#x0D;&#x0A;"
+				CommandLine="IF NOT EXIST $(ConfigurationName)\vc90.pdb COPY  ..\StdAfx\$(ConfigurationName)\vc90.pdb $(ConfigurationName)&#x0D;&#x0A;IF NOT EXIST $(ConfigurationName)\vc90.idb COPY  ..\StdAfx\$(ConfigurationName)\vc90.idb $(ConfigurationName)&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\StdAfx\src;C:\_perforce\COTS\boost\boost_1_55_0;src"
+				AdditionalIncludeDirectories="C:\_perforce\COTS\boost\boost_1_55_0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -103,7 +103,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="IF EXIST $(ConfigurationName)\vc90.pdb DEL /Q /F $(ConfigurationName)\vc90.pdb&#x0D;&#x0A;IF EXIST $(ConfigurationName)\vc90.idb  DEL /Q /F $(ConfigurationName)\vc90.idb&#x0D;&#x0A;MKLINK /H $(ConfigurationName)\vc90.pdb ..\StdAfx\$(ConfigurationName)\vc90.pdb&#x0D;&#x0A;MKLINK /H $(ConfigurationName)\vc90.idb  ..\StdAfx\$(ConfigurationName)\vc90.idb&#x0D;&#x0A;"
+				CommandLine="IF NOT EXIST $(ConfigurationName)\vc90.pdb COPY  ..\StdAfx\$(ConfigurationName)\vc90.pdb $(ConfigurationName)&#x0D;&#x0A;IF NOT EXIST $(ConfigurationName)\vc90.idb COPY  ..\StdAfx\$(ConfigurationName)\vc90.idb $(ConfigurationName)"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -125,7 +125,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="false"
-				AdditionalIncludeDirectories="..\StdAfx\src;CodeBlock;Command;Common;File;main;Observer;Style;PerformanceTest;C:\_perforce\COTS\boost\boost_1_55_0"
+				AdditionalIncludeDirectories="C:\_perforce\COTS\boost\boost_1_55_0"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
@@ -186,56 +186,52 @@
 			Name="src"
 			>
 			<File
-				RelativePath=".\src\FileIncludeFinder.cpp"
+				RelativePath=".\src\FileCollector.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\FileIncludeFinder.h"
+				RelativePath=".\src\FileCollector.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\main.cpp"
+				RelativePath=".\src\ProjectCollector.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Solution.cpp"
+				RelativePath=".\src\ProjectCollector.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Solution.h"
+				RelativePath=".\src\SolutionCollector.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\Vcproj.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Vcproj.h"
+				RelativePath=".\src\SolutionCollector.h"
 				>
 			</File>
 		</Filter>
 		<Filter
-			Name="include"
+			Name="common"
 			>
 			<File
-				RelativePath=".\src\CommandLineHelper.cpp"
+				RelativePath=".\src\CommonDefs.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\CommandLineHelper.h"
+				RelativePath=".\src\Utility.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\MakeSDK.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\Parameter.h"
+				RelativePath=".\src\Utility.h"
 				>
 			</File>
 		</Filter>
 		<File
 			RelativePath=".\src\command_line.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\src\main.cpp"
 			>
 		</File>
 	</Files>

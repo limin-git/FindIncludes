@@ -1,15 +1,16 @@
 #include "StdAfx.h"
-#include "Vcproj.h"
-#include "FileIncludeFinder.h"
+#include "ProjectCollector.h"
+#include "FileCollector.h"
+#include "Utility.h"
 
 
-Vcproj::Vcproj( const path& p, const std::string& configuration_type )
+ProjectCollector::ProjectCollector( const path& p, const std::string& configuration_name )
     : m_path( p ),
-      m_configuration_type( configuration_type )
+      m_configuration_name( configuration_name )
 {
     std::cout << m_path.string() << std::endl;
     m_current_path = m_path.parent_path();
-    m_str = get_string_from_file( m_path.string() );
+    m_str = Utility::get_string_from_file( m_path.string() );
     //std::cout << m_current_path.string() << std::endl;
 
     extract_files();
@@ -17,20 +18,7 @@ Vcproj::Vcproj( const path& p, const std::string& configuration_type )
 }
 
 
-std::string Vcproj::get_string_from_file( const std::string& file_path )
-{
-    std::ifstream ifs( file_path.c_str() );
-
-    if ( ifs )
-    {
-        return std::string( std::istreambuf_iterator< char >( ifs ), ( std::istreambuf_iterator< char >() ) );
-    }
-
-    return "";
-}
-
-
-void Vcproj::extract_files()
+void ProjectCollector::extract_files()
 {
     if ( m_str.empty() )
     {
@@ -51,8 +39,8 @@ void Vcproj::extract_files()
     (
         "(?x)"
         "<FileConfiguration \\s+"
-        "Name= \" ( .+? )  \" \\s+"                 //$1, Name
-        "ExcludedFromBuild= \" ( .+? ) \" \\s+ "    //$2, ExcludedFromBuild
+        "    Name= \" ( .+? )  \" \\s+"                 //$1, Name
+        "    ExcludedFromBuild= \" ( .+? ) \" \\s+ "    //$2, ExcludedFromBuild
         ">"
     );
 
@@ -77,7 +65,7 @@ void Vcproj::extract_files()
                 std::string excluded_form_build = fc_it->str(2);
 
                 std::stringstream match_strm;
-                match_strm << m_configuration_type << "|Win32";
+                match_strm << m_configuration_name << "|Win32";
 
                 if ( file_configuration_name == match_strm.str() )
                 {
@@ -105,7 +93,7 @@ void Vcproj::extract_files()
 }
 
 
-void Vcproj::extract_additional_include_directories()
+void ProjectCollector::extract_additional_include_directories()
 {
     if ( m_str.empty() )
     {
@@ -116,7 +104,7 @@ void Vcproj::extract_additional_include_directories()
     configuration_regex_strm
         << "(?x)"
         << "<Configuration \\s+"
-        << "    Name=\"" << m_configuration_type << "\\|Win32\""
+        << "    Name=\"" << m_configuration_name << "\\|Win32\""
         << "    .+?"
         << "    AdditionalIncludeDirectories=\" ([^\"]*) \""
         << "    .+?"
@@ -145,32 +133,26 @@ void Vcproj::extract_additional_include_directories()
 }
 
 
-std::set<path> Vcproj::get_includes_in_thread( const path& file_path )
+void ProjectCollector::collect_in_thread( std::set<path>& project_includes, const path& p )
 {
-    std::set<path> includes;
-    Vcproj p( file_path );
-    std::vector<path>& files = p.m_files;
-    std::vector< std::set<path> > includes_list( files.size() );
+    ProjectCollector project( p );
+    std::vector<path>& files = project.m_files;
+    std::vector< std::set<path> > file_includes( files.size() );
     std::vector<boost::shared_ptr<boost::thread> > threads;
 
     for ( size_t i = 0; i < files.size(); ++i )
     {
-        boost::shared_ptr<boost::thread> t = FileIncludeFinder::get_includes_thread( includes_list[i], files[i], p.m_current_path, p.m_additional_include_directories );
+        boost::shared_ptr<boost::thread> t = FileCollector::create_FileCollectorThread( file_includes[i], files[i], project.m_current_path, project.m_additional_include_directories );
         threads.push_back( t );
     }
 
     for ( size_t i = 0; i < threads.size(); ++i )
     {
         threads[i]->join();
-        std::cout << "." << std::flush;
     }
 
-    std::cout << std::endl;
-
-    for ( size_t i = 0; i < 5; ++i )
+    for ( size_t i = 0; i < file_includes.size(); ++i )
     {
-        includes.insert( includes_list[i].begin(), includes_list[i].end() );
+        project_includes.insert( file_includes[i].begin(), file_includes[i].end() );
     }
-
-    return includes;    
 }

@@ -1,7 +1,8 @@
 #include "StdAfx.h"
-#include "FileIncludeFinder.h"
-#include "Vcproj.h"
-#include "Solution.h"
+#include "FileCollector.h"
+#include "ProjectCollector.h"
+#include "SolutionCollector.h"
+#include "Utility.h"
 
 
 void main(int argc, char* argv[])
@@ -21,11 +22,11 @@ void main(int argc, char* argv[])
 
     if ( boost::ends_with( argv[1], "vcproj" ) )
     {
-        includes = Vcproj::get_includes_in_thread( argv[1] );
+        ProjectCollector::collect_in_thread( includes, argv[1] );
     }
     else if ( boost::ends_with( argv[1], "sln" ) )
     {
-        includes = Solution::get_includes_in_thread( argv[1] );
+        SolutionCollector::collect_in_thread( includes, argv[1] );
     }
     else
     {
@@ -33,11 +34,11 @@ void main(int argc, char* argv[])
         return;
     }
 
-    //Vcproj p( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
-    //std::set<path> paths = Vcproj::get_includes_in_thread( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
-    //std::set<path> paths = Solution::get_includes_in_thread( "C:\\Code\\PchBuild\\code\\tools\\build\\tools.build.Build_Base_Bus.sln" );
+    //ProjectCollector p( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
+    //std::set<path> paths = ProjectCollector::collect_in_thread( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
+    //std::set<path> paths = SolutionCollector::collect_in_thread( "C:\\Code\\PchBuild\\code\\tools\\build\\tools.build.Build_Base_Bus.sln" );
 
-    system( "CLS" );
+    //system( "CLS" );
     std::cout << "================================================= INCLUDES =================================================" << std::endl;
-    FileIncludeFinder::output( std::cout, includes );
+    Utility::output_paths( std::cout, includes );
 }

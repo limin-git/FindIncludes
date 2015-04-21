@@ -1,34 +1,22 @@
 #include "StdAfx.h"
-#include "Solution.h"
-#include "Vcproj.h"
+#include "SolutionCollector.h"
+#include "ProjectCollector.h"
+#include "Utility.h"
 
 
-Solution::Solution( const path& p )
+SolutionCollector::SolutionCollector( const path& p )
     : m_path( p )
 {
     std::cout << m_path.string() << std::endl;
     m_current_path = m_path.parent_path();
-    m_str = get_string_from_file( m_path.string() );
+    m_str = Utility::get_string_from_file( m_path.string() );
     //std::cout << m_current_path.string() << std::endl;
 
     extract_projects();
 }
 
 
-std::string Solution::get_string_from_file( const std::string& file_path )
-{
-    std::ifstream ifs( file_path.c_str() );
-
-    if ( ifs )
-    {
-        return std::string( std::istreambuf_iterator< char >( ifs ), ( std::istreambuf_iterator< char >() ) );
-    }
-
-    return "";
-}
-
-
-void Solution::extract_projects()
+void SolutionCollector::extract_projects()
 {
     if ( m_str.empty() )
     {
@@ -63,17 +51,15 @@ void Solution::extract_projects()
 }
 
 
-std::set<path> Solution::get_includes_in_thread( const path& file_path )
+void SolutionCollector::collect_in_thread( std::set<path>& solution_includes, const path& p )
 {
-    std::set<path> all_includes;
-    Solution s( file_path );
-    std::vector<path>& projects = s.m_projects;
+    SolutionCollector slution( p );
+    std::vector<path>& projects = slution.m_projects;
 
     for ( size_t i = 0; i < projects.size(); ++i )
     {
-        std::set<path> includes = Vcproj::get_includes_in_thread( projects[i] );
-        all_includes.insert( includes.begin(), includes.end() );
+        std::set<path> project_includes;
+        ProjectCollector::collect_in_thread( project_includes, projects[i] );
+        solution_includes.insert( project_includes.begin(), project_includes.end() );
     }
-
-    return all_includes;    
 }
