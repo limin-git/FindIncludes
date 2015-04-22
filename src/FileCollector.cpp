@@ -10,6 +10,16 @@ FileCollector::FileCollector( const path& p, const path& current_path, const std
 {
     std::cout << m_path.string() << std::endl;
 
+    for ( size_t i = 0; i < m_additional_directories.size(); ++i )
+    {
+        std::string s = m_additional_directories[i].string();
+
+        if ( boost::regex_search( s, boost::regex( "(?x) \\b (cots|omniORB|boost|ACE_wrappers) \\b" ) ) )
+        {
+            m_additional_directories[i] = path();
+        }
+    }
+
     recursive_collect();
 }
 

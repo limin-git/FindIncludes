@@ -103,7 +103,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="IF NOT EXIST $(ConfigurationName)\vc90.pdb COPY  ..\StdAfx\$(ConfigurationName)\vc90.pdb $(ConfigurationName)&#x0D;&#x0A;IF NOT EXIST $(ConfigurationName)\vc90.idb COPY  ..\StdAfx\$(ConfigurationName)\vc90.idb $(ConfigurationName)"
+				CommandLine="IF NOT EXIST $(ConfigurationName)\vc90.?db XCOPY /F  ..\StdAfx\$(ConfigurationName)\vc90.?db $(ConfigurationName)"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
