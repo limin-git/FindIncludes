@@ -25,7 +25,8 @@ const std::vector<path>& FileCollector::collect_from_file( const path& p )
 
         void operator()()
         {
-            std::string s = Utility::get_string_from_file( m_path );
+            std::string s = Utility::get_string_from_file( m_path, 200 );
+            //std::string s = Utility::get_string_from_file( m_path );
             std::vector<path> paths;
             static const boost::regex e
             (
