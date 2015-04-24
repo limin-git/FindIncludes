@@ -6,14 +6,15 @@ struct FileCollector
 {
 public:
 
-    FileCollector( const path& p, const path& current_path, const std::vector<path>& additional );
+    FileCollector( const path& p, const path& current_path, const std::vector<path>& additional_directories );
 
     static boost::shared_ptr<boost::thread> create_FileCollectorThread( std::set<path>& includes, const path& p, const path& current_path, const std::vector<path>& additional );
 
 private:
 
-    path search_path( const path& include, const path& parent );
+    void simple_collect();
     void recursive_collect();
+    path search_path( const path& include, const path& parent );
     const std::vector<path>& collect_from_file( const path& file_path ); 
 
 public:

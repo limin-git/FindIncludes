@@ -3,24 +3,14 @@
 #include "Utility.h"
 
 
-FileCollector::FileCollector( const path& p, const path& current_path, const std::vector<path>& additional )
+FileCollector::FileCollector( const path& p, const path& current_path, const std::vector<path>& additional_directories )
     : m_path( p ),
       m_current_path( current_path ),
-      m_additional_directories( additional )
+      m_additional_directories( additional_directories )
 {
     std::cout << m_path.string() << std::endl;
-
-    for ( size_t i = 0; i < m_additional_directories.size(); ++i )
-    {
-        std::string s = m_additional_directories[i].string();
-
-        if ( boost::regex_search( s, boost::regex( "(?x) \\b (cots|omniORB|boost|ACE_wrappers) \\b" ) ) )
-        {
-            m_additional_directories[i] = path();
-        }
-    }
-
-    recursive_collect();
+    simple_collect();
+    //recursive_collect();
 }
 
 
@@ -55,7 +45,7 @@ const std::vector<path>& FileCollector::collect_from_file( const path& p )
             m_condition.notify_all();
         }
 
-        path m_path;
+        const path& m_path;
         boost::condition_variable& m_condition;
         boost::mutex& m_mutex;
         std::map< path, std::vector<path> >& m_map;
@@ -70,8 +60,8 @@ const std::vector<path>& FileCollector::collect_from_file( const path& p )
 
     if ( it == s_file_includes_map.end() )
     {
-        CollectFromFileThread date( p, s_file_includes_map, s_mutex, s_condition );
-        boost::thread t( date );
+        CollectFromFileThread data( p, s_file_includes_map, s_mutex, s_condition );
+        boost::thread t( data );
     }
 
     while ( it == s_file_includes_map.end() )
@@ -96,7 +86,6 @@ path FileCollector::search_path( const path& include, const path& parent )
 
         if ( boost::filesystem::exists( p ) && ! is_directory( p ) )
         {
-            //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
             return boost::filesystem::system_complete(p);
         }
     }
@@ -106,7 +95,6 @@ path FileCollector::search_path( const path& include, const path& parent )
 
         if ( boost::filesystem::exists( p ) && ! is_directory( p ) )
         {
-            //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
             return boost::filesystem::system_complete(p);
         }
     }
@@ -114,20 +102,18 @@ path FileCollector::search_path( const path& include, const path& parent )
     for ( size_t i = 0; i < m_additional_directories.size(); ++i )
     {
         path p;
-        const path& additional = m_additional_directories[i];
 
-        if ( additional.is_absolute() )
+        if ( m_additional_directories[i].is_absolute() )
         {
-            p = additional / include;
+            p = m_additional_directories[i] / include;
         }
         else
         {
-            p = m_current_path / additional / include;
+            p = m_current_path / m_additional_directories[i] / include;
         }
 
         if ( boost::filesystem::exists( p ) && ! is_directory(p) )
         {
-            //std::cout << boost::filesystem::system_complete(p).string() << std::endl;
             return boost::filesystem::system_complete(p);
         }
     }
@@ -165,6 +151,27 @@ void FileCollector::recursive_collect()
                     m_queue.push( include );
                 }
             }
+        }
+    }
+}
+
+
+void FileCollector::simple_collect()
+{
+    path parent = m_path.parent_path();
+    const std::vector<path>& includes = collect_from_file( m_path );
+
+    for ( size_t i = 0; i < includes.size(); ++i )
+    {
+        path include = search_path( includes[i], parent );
+
+        if ( false == include.empty() )
+        {
+            m_includes.insert( include );
+        }
+        else
+        {
+            m_includes.insert( includes[i] );
         }
     }
 }

@@ -10,20 +10,23 @@ ProjectCollector::ProjectCollector( const path& p, const std::string& configurat
 {
     std::cout << m_path.string() << std::endl;
     m_current_path = m_path.parent_path();
-    m_str = Utility::get_string_from_file( m_path.string() );
+    m_str = Utility::get_string_from_file( m_path );
     //std::cout << m_current_path.string() << std::endl;
 
-    extract_files();
-    extract_additional_include_directories();
+    if ( false == m_str.empty() )
+    {
+        extract_files();
+        extract_additional_include_directories();
+    }
 }
 
 
 void ProjectCollector::extract_files()
 {
-    if ( m_str.empty() )
-    {
-        return;
-    }
+    static const std::string configuration_name =  m_configuration_name + "|Win32";
+    static const path extension_list[] = { ".c", ".cpp", ".cxx", ".cc", ".h", ".hpp", ".hxx", ".hh", ".inl" };
+    static size_t size = sizeof(extension_list) / sizeof(path);
+    static const std::set<path> extensions( extension_list, extension_list + size );
 
     // extract files
     static const boost::regex file_regex
@@ -34,16 +37,6 @@ void ProjectCollector::extract_files()
         "    ( .*? ) \\s+ "                           //$2, configurations
         "</File>"
     );
-
-    static const boost::regex file_configuration_regex
-    (
-        "(?x)"
-        "<FileConfiguration \\s+"
-        "    Name= \" ( .+? )  \" \\s+"                 //$1, Name
-        "    ExcludedFromBuild= \" ( .+? ) \" \\s+ "    //$2, ExcludedFromBuild
-        ">"
-    );
-
     boost::sregex_iterator it( m_str.begin(), m_str.end(), file_regex );
     boost::sregex_iterator end;
 
@@ -51,23 +44,27 @@ void ProjectCollector::extract_files()
     {
         path source_file_relative_path = it->str(1);
         std::string configurations = it->str(2);
-
         bool is_excluded = false;
 
         if ( false == configurations.empty() )
         {
-            boost::sregex_iterator fc_it( configurations.begin(), configurations.end(), file_configuration_regex );
+            static const boost::regex file_configuration_regex
+            (
+                "(?x)"
+                "<FileConfiguration \\s+"
+                "    Name= \" ( .+? )  \" \\s+"                 //$1, Name
+                "    ExcludedFromBuild= \" ( .+? ) \" \\s+ "    //$2, ExcludedFromBuild
+                ">"
+            );
+            boost::sregex_iterator it( configurations.begin(), configurations.end(), file_configuration_regex );
             boost::sregex_iterator end;
 
-            for ( ; fc_it != end; ++fc_it )
+            for ( ; it != end; ++it )
             {
-                std::string file_configuration_name = fc_it->str(1);
-                std::string excluded_form_build = fc_it->str(2);
+                std::string file_configuration_name = it->str(1);
+                std::string excluded_form_build = it->str(2);
 
-                std::stringstream match_strm;
-                match_strm << m_configuration_name << "|Win32";
-
-                if ( file_configuration_name == match_strm.str() )
+                if ( file_configuration_name == configuration_name )
                 {
                     if ( "true" == excluded_form_build )
                     {
@@ -83,7 +80,7 @@ void ProjectCollector::extract_files()
         {
             path p = boost::filesystem::system_complete( m_current_path / source_file_relative_path  );
 
-            if ( boost::ends_with( p.string(), "cpp" ) )
+            if ( extensions.find( p.extension() ) != extensions.end() )
             {
                 //std::cout << p.string() << std::endl;
                 m_files.push_back( p );
@@ -95,11 +92,6 @@ void ProjectCollector::extract_files()
 
 void ProjectCollector::extract_additional_include_directories()
 {
-    if ( m_str.empty() )
-    {
-        return;
-    }
-
     std::stringstream configuration_regex_strm;
     configuration_regex_strm
         << "(?x)"

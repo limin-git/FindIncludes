@@ -34,11 +34,7 @@ void main(int argc, char* argv[])
         return;
     }
 
-    //ProjectCollector p( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
-    //std::set<path> paths = ProjectCollector::collect_in_thread( "C:\\Code\\PchBuild\\code\\transactive\\core\\alarm\\core.alarm.TA_Alarm.vcproj" );
-    //std::set<path> paths = SolutionCollector::collect_in_thread( "C:\\Code\\PchBuild\\code\\tools\\build\\tools.build.Build_Base_Bus.sln" );
-
-    //system( "CLS" );
-    std::cout << "================================================= INCLUDES =================================================" << std::endl;
+    std::cout << std::endl;
+    std::cout << "====================================================== includes ======================================================" << std::endl;
     Utility::output_paths( std::cout, includes );
 }
