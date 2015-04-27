@@ -12,7 +12,7 @@ public:
 
 private:
 
-    void extract_projects();
+    void extract_project_paths();
 
 public:
 
